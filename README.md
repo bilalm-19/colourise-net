@@ -1,4 +1,4 @@
-# colourse-net
+# colourise-net
 
 Turn greyscale images into colourised image
 
