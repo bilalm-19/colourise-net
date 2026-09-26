@@ -97,3 +97,5 @@ if __name__ == "__main__":
     # batch size 4, 3 colour channels, back to full 32x32 size
     # therefore expected shape is [4, 3, 32, 32]
     print("Model output:", model(fake).shape)
+
+    print("Parameters:", sum(p.numel() for p in model.parameters()))
