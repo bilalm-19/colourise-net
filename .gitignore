@@ -1,4 +1,6 @@
 ﻿venv/
 data/
-checkpoints/
+checkpoints/*
+!checkpoints/best_model.pt
 __pycache__/
+.pytest_cache/
