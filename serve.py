@@ -23,7 +23,8 @@ from contextlib import asynccontextmanager
 
 import torch
 from fastapi import FastAPI, HTTPException, UploadFile
-from fastapi.responses import RedirectResponse, Response
+from pathlib import Path
+from fastapi.responses import FileResponse, Response
 from PIL import Image, UnidentifiedImageError
 from torchvision.transforms.functional import pil_to_tensor, to_pil_image
 
@@ -96,8 +97,8 @@ def colourise_image(img: Image.Image, full_res: bool) -> Image.Image:
 
 @app.get("/", include_in_schema=False)
 def root():
-    """Send visitors at the root URL to the interactive docs."""
-    return RedirectResponse("/docs")
+    """Simple upload page for trying the model in the browser."""
+    return FileResponse(Path(__file__).parent / "static" / "index.html")
 
 @app.get("/health")
 def health():

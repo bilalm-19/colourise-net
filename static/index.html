@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>colourise-net</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    /* ---------- Theme ---------- */
+    :root {
+      --bg: #f6f6f8;
+      --surface: #ffffff;
+      --surface-2: #f1f1f4;
+      --text: #17171c;
+      --muted: #6a6a76;
+      --border: #e3e3e8;
+      --accent: #5b4cf0;
+      --accent-soft: rgba(91, 76, 240, 0.1);
+      --error: #d93636;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.06);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg: #0e0e12; --surface: #17171d; --surface-2: #1f1f27; --text: #ececf1; --muted: #9b9ba8;
+        --border: #2b2b35; --accent: #8b7fff; --accent-soft: rgba(139, 127, 255, 0.14); --error: #ff6b6b;
+        --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.3);
+      }
+    }
+    :root[data-theme="dark"] {
+      --bg: #0e0e12; --surface: #17171d; --surface-2: #1f1f27; --text: #ececf1; --muted: #9b9ba8;
+      --border: #2b2b35; --accent: #8b7fff; --accent-soft: rgba(139, 127, 255, 0.14); --error: #ff6b6b;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.3);
+    }
+
+    /* ---------- Base ---------- */
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--bg); color: var(--text);
+      font: 15px/1.6 "Inter", system-ui, sans-serif;
+      transition: background 0.2s, color 0.2s;
+    }
+    code, .mono { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 0.9em; }
+    .wrap { max-width: 960px; margin: 0 auto; padding: 0 20px; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow); }
+
+    /* ---------- Header ---------- */
+    header { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; }
+    .logo { font-weight: 600; letter-spacing: -0.01em; }
+    .logo span { color: var(--muted); font-weight: 400; }
+    .icon-btn {
+      display: grid; place-items: center; width: 38px; height: 38px; border-radius: 10px;
+      border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer;
+    }
+    .icon-btn:hover { background: var(--surface-2); }
+    .icon-btn svg { width: 18px; height: 18px; }
+    .sun { display: none; }
+    [data-dark="true"] .sun { display: block; }
+    [data-dark="true"] .moon { display: none; }
+
+    /* ---------- Intro ---------- */
+    .hero { padding: 32px 0 24px; }
+    h1 { font-size: clamp(30px, 5vw, 44px); line-height: 1.1; letter-spacing: -0.03em; margin: 0 0 12px; }
+    .rainbow {
+      background: linear-gradient(90deg, #f0544f, #f5a524, #3fb950, #3b82f6, #8b5cf6);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .lead { color: var(--muted); font-size: 17px; margin: 0; max-width: 620px; }
+
+    .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 28px 0 12px; padding: 0; list-style: none; }
+    .steps li { padding: 14px 16px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); font-size: 14px; }
+    .steps b { display: block; color: var(--accent); font-size: 12px; font-weight: 600; letter-spacing: 0.04em; margin-bottom: 2px; }
+    .trick { font-size: 14px; color: var(--muted); margin: 0; }
+    .trick strong { color: var(--text); font-weight: 600; }
+
+    /* ---------- Upload panel ---------- */
+    .panel { padding: 24px; margin: 24px 0; display: grid; gap: 20px; }
+    .label { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+
+    .drop {
+      position: relative; display: flex; align-items: center; gap: 16px; min-height: 120px; padding: 20px;
+      border: 1.5px dashed var(--border); border-radius: 12px; background: var(--surface-2);
+      cursor: pointer; transition: border-color 0.15s, background 0.15s;
+    }
+    .drop:hover, .drop.dragging { border-color: var(--accent); background: var(--accent-soft); }
+    .drop input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .drop-icon { width: 44px; height: 44px; flex: none; border-radius: 10px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); }
+    .drop-icon svg { width: 22px; height: 22px; }
+    .drop-text b { display: block; font-weight: 600; }
+    .drop-text span { color: var(--muted); font-size: 13px; }
+    .drop .thumb { width: 88px; height: 88px; flex: none; object-fit: cover; border-radius: 8px; display: none; }
+    .drop.has-file .thumb { display: block; }
+    .drop.has-file .drop-icon { display: none; }
+
+    .options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .option { position: relative; padding: 14px 16px; border: 1.5px solid var(--border); border-radius: 12px; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
+    .option input { position: absolute; opacity: 0; }
+    .option b { display: block; font-weight: 600; }
+    .option span { color: var(--muted); font-size: 13px; }
+    .option:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+    .option:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    .actions { display: flex; align-items: center; gap: 16px; }
+    .primary {
+      padding: 12px 28px; border: 0; border-radius: 10px; background: var(--accent); color: #fff;
+      font: inherit; font-weight: 600; cursor: pointer; transition: opacity 0.15s, transform 0.05s;
+    }
+    .primary:active { transform: scale(0.98); }
+    .primary:disabled { opacity: 0.45; cursor: not-allowed; }
+    #status { font-size: 14px; color: var(--muted); }
+    #status.error { color: var(--error); }
+
+    /* ---------- Results ---------- */
+    .results { display: none; gap: 16px; margin-bottom: 24px; }
+    .results.show { display: grid; }
+    .results.full { grid-template-columns: repeat(3, 1fr); }
+    .results.raw { grid-template-columns: repeat(2, minmax(0, 260px)); }
+    figure { margin: 0; padding: 12px; }
+    figure img, figure canvas { display: block; width: 100%; height: auto; border-radius: 8px; background: var(--surface-2); }
+    .pixel { image-rendering: pixelated; }
+    figcaption { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 10px 4px 2px; font-size: 14px; }
+    figcaption b { font-weight: 600; }
+    figcaption span { color: var(--muted); font-size: 12px; }
+    figcaption a { color: var(--accent); font-size: 12px; text-decoration: none; white-space: nowrap; }
+    figcaption a:hover { text-decoration: underline; }
+
+    footer { padding: 24px 0 40px; color: var(--muted); font-size: 13px; display: flex; gap: 20px; flex-wrap: wrap; }
+    footer a { color: inherit; }
+
+    @media (max-width: 720px) {
+      .steps { grid-template-columns: 1fr 1fr; }
+      .options, .results.full { grid-template-columns: 1fr; }
+      .results.raw { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="logo">colourise-net <span>/ demo</span></div>
+      <button class="icon-btn" id="theme" aria-label="Toggle dark mode">
+        <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+        <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      </button>
+    </header>
+
+    <section class="hero">
+      <h1>Bring greyscale photos to <span class="rainbow">colour</span></h1>
+      <p class="lead">A small PyTorch U-Net, trained on CIFAR-10 and served with FastAPI.</p>
+
+      <ol class="steps">
+        <li><b>01</b>Convert to greyscale</li>
+        <li><b>02</b>Shrink to 32×32</li>
+        <li><b>03</b>U-Net predicts the colours</li>
+        <li><b>04</b>Return 32×32, or resize to full size</li>
+      </ol>
+      <p class="trick"><strong>Full-res trick:</strong> keep the model's colour, but swap its blurry brightness for the original photo's sharp brightness.</p>
+    </section>
+
+    <section class="card panel">
+      <div>
+        <div class="label">Image</div>
+        <label class="drop" id="drop">
+          <input type="file" id="file" accept="image/*">
+          <div class="drop-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+          </div>
+          <img class="thumb" id="thumb" alt="">
+          <div class="drop-text">
+            <b id="drop-title">Drop an image here, or click to browse</b>
+            <span id="drop-sub">PNG or JPG, up to 5 MB</span>
+          </div>
+        </label>
+      </div>
+
+      <div>
+        <div class="label">Output</div>
+        <div class="options">
+          <label class="option">
+            <input type="radio" name="mode" value="raw">
+            <b>32×32</b>
+            <span>The model's raw output, at the size it was trained on.</span>
+          </label>
+          <label class="option">
+            <input type="radio" name="mode" value="full" checked>
+            <b>Full size</b>
+            <span>Resized to the original size: simply stretched, and with the full-res trick.</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="primary" id="go" disabled>Colourise</button>
+        <span id="status"></span>
+      </div>
+    </section>
+
+    <section class="results" id="results"></section>
+
+    <footer>
+      <a href="/docs">API docs</a>
+      <a href="/health">Health</a>
+      <a href="https://github.com/bilalm-19/colourise-net">GitHub</a>
+    </footer>
+  </div>
+
+  <script>
+    // ---------- Theme: follow the system, remember a manual choice ----------
+    const root = document.documentElement;
+    const systemDark = matchMedia("(prefers-color-scheme: dark)");
+    function isDark() {
+      const t = root.dataset.theme;
+      return t ? t === "dark" : systemDark.matches;
+    }
+    function syncIcon() { root.dataset.dark = isDark(); }
+    try { const saved = localStorage.getItem("theme"); if (saved) root.dataset.theme = saved; } catch {}
+    syncIcon();
+    systemDark.addEventListener("change", syncIcon);
+    document.getElementById("theme").addEventListener("click", () => {
+      root.dataset.theme = isDark() ? "light" : "dark";
+      try { localStorage.setItem("theme", root.dataset.theme); } catch {}
+      syncIcon();
+    });
+
+    // ---------- File picker with preview and drag-and-drop ----------
+    const drop = document.getElementById("drop");
+    const fileInput = document.getElementById("file");
+    const button = document.getElementById("go");
+    const status = document.getElementById("status");
+    const results = document.getElementById("results");
+    let file = null;
+
+    function setFile(f) {
+      if (!f || !f.type.startsWith("image/")) return;
+      file = f;
+      document.getElementById("thumb").src = URL.createObjectURL(f);
+      document.getElementById("drop-title").textContent = f.name;
+      document.getElementById("drop-sub").textContent = `${(f.size / 1024).toFixed(0)} KB · click or drop to change`;
+      drop.classList.add("has-file");
+      button.disabled = false;
+    }
+    fileInput.addEventListener("change", () => setFile(fileInput.files[0]));
+    ["dragenter", "dragover"].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.add("dragging"); }));
+    ["dragleave", "drop"].forEach(e => drop.addEventListener(e, () => drop.classList.remove("dragging")));
+    drop.addEventListener("drop", ev => { ev.preventDefault(); setFile(ev.dataTransfer.files[0]); });
+
+    // ---------- Helpers ----------
+    const loadImage = src => new Promise((ok, fail) => {
+      const i = new Image();
+      i.onload = () => ok(i);
+      i.onerror = () => fail(new Error("Your browser can't display this image format"));
+      i.src = src;
+    });
+
+    // Draw part of an image onto a new canvas (optionally greyscale, like the server's convert("L"))
+    function toCanvas(img, { sx = 0, sw = img.naturalWidth, w = sw, h = img.naturalHeight, grey = false } = {}) {
+      const c = document.createElement("canvas");
+      c.width = w; c.height = h;
+      const ctx = c.getContext("2d");
+      ctx.drawImage(img, sx, 0, sw, img.naturalHeight, 0, 0, w, h);
+      if (grey) {
+        const d = ctx.getImageData(0, 0, w, h);
+        for (let i = 0; i < d.data.length; i += 4) {
+          const y = 0.299 * d.data[i] + 0.587 * d.data[i + 1] + 0.114 * d.data[i + 2];
+          d.data[i] = d.data[i + 1] = d.data[i + 2] = y;
+        }
+        ctx.putImageData(d, 0, 0);
+      }
+      return c;
+    }
+
+    function figure(canvas, title, note, { pixel = false, download } = {}) {
+      const f = document.createElement("figure");
+      f.className = "card";
+      if (pixel) canvas.classList.add("pixel");
+      f.append(canvas);
+      const cap = document.createElement("figcaption");
+      cap.innerHTML = `<div><b>${title}</b><br><span>${note}</span></div>`;
+      if (download) {
+        const a = document.createElement("a");
+        a.textContent = "Download";
+        a.href = "#";
+        a.onclick = e => { e.preventDefault(); canvas.toBlob(b => { a.href = URL.createObjectURL(b); a.download = download; a.onclick = null; a.click(); }); };
+        cap.append(a);
+      }
+      f.append(cap);
+      return f;
+    }
+
+    // ---------- Call the API ----------
+    button.addEventListener("click", async () => {
+      const mode = document.querySelector("input[name=mode]:checked").value;
+      const form = new FormData();
+      form.append("file", file);
+
+      button.disabled = true;
+      status.className = "";
+      status.textContent = "Colourising…";
+      try {
+        const r = await fetch(`/colourise?full_res=${mode === "full"}`, { method: "POST", body: form });
+        if (!r.ok) throw new Error((await r.json()).detail || r.statusText);  // e.g. "File too large (max 5 MB)"
+
+        const out = await loadImage(URL.createObjectURL(await r.blob()));
+        const input = await loadImage(URL.createObjectURL(file));
+        results.replaceChildren();
+        results.className = `results show ${mode}`;
+
+        if (mode === "raw") {
+          results.append(
+            figure(toCanvas(input, { w: 32, h: 32, grey: true }), "Model input", "32×32 greyscale", { pixel: true }),
+            figure(toCanvas(out), "Model output", "32×32 colour", { pixel: true, download: "colourised_32x32.png" }),
+          );
+        } else {
+          // The server returns both versions side by side in one image: split it into two
+          const half = out.naturalWidth / 2;
+          results.append(
+            figure(toCanvas(input, { grey: true }), "Input", "Greyscale"),
+            figure(toCanvas(out, { sw: half }), "Stretched", "32×32 output resized: blurry", { download: "colourised_stretched.png" }),
+            figure(toCanvas(out, { sx: half, sw: half }), "Full-res trick", "Original brightness + model colour", { download: "colourised_full_res.png" }),
+          );
+        }
+        status.textContent = `Done in ${r.headers.get("X-Inference-Time-Ms")} ms`;
+        results.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      } catch (err) {
+        status.className = "error";
+        status.textContent = err.message;
+      } finally {
+        button.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
