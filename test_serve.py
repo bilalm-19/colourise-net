@@ -72,3 +72,10 @@ def test_rejects_image_dimensions_too_large():
         # A plain 5000x5000 image compresses to a tiny file, but has too many pixels
         r = client.post("/colourise", files={"file": ("huge.png", make_png((5000, 5000)), "image/png")})
         assert r.status_code == 413
+
+
+def test_home_page():
+    with TestClient(serve.app) as client:
+        r = client.get("/")
+        assert r.status_code == 200
+        assert "text/html" in r.headers["content-type"]
